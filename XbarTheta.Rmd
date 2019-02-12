@@ -1,0 +1,110 @@
+---
+title: "Mini-Lab-simulation-theta-xbar"
+author: "Lane Quigley"
+date: "February 6, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE, warning = FALSE)
+```
+
+# Introduction
+
+We will investigate the distribution of $\theta$ made so that $\tilde{s}_{12}=0$ (looking only at the first clockwise root solution in radians) and the distribution of $\bar{X}$, the sample mean.
+
+This will be done by simulation.
+
+# Method and tasks
+
+## Function name and parameters
+
+Call the function `xbarthetadist()` make it take arguments `n` the sample size, $iter$ the number of iterations, $\mu$ the population mean vector (2X1) and the var-cov matrix (2X2). You may wish to pass other arguments.
+
+## `theta`
+
+There are various ways to find theta -- the most alegant is to use the analytical solution which is what we will use here.
+
+## Tasks
+
+Make a function that does the following:
+
+1. Repeatedly simulates a sample of size $n$ from a bivariate normal that has mean $\mu$ and variance covariance matrix $\Sigma$. 
+2. Uses each sample to calculate $\bar{X}$ and $\theta$
+3. Stores these values appropriately
+4. Makes a total of 4  plots using `ggplot`: 
+  +  scatterplot and 
+  +  2d density plot of $\bar{X}$
+  +  a histogram  and 
+  +  a density plot of $\theta$
+  
+You may wish to consult <http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/>
+  
+```{r}
+xbarthetadist = function(n,iter,mu,sigma){
+  library(mvtnorm)
+  library(ggplot2)
+  mat = matrix(NA, nr= iter, nc=4)
+  colnames(mat)= c("xbar1","xbar2","thetae","thetar")
+  for(i in 1:iter){
+    x = rmvnorm(n,mu,sigma)
+    mat[i,c(1,2)] <- colMeans(x)
+    s=(n-1)/n*cov(x)
+    eig=eigen(s)
+    thetaeigen=acos(eig$vectors[,1][1])
+    thetarot= .5*atan(2*s[1,2]/(s[1,1]-s[2,2])) + pi/2
+    
+    mat[i,3]<-thetaeigen
+    mat[i,4]<-thetarot
+    
+
+
+  }
+
+  df=as.data.frame(mat)
+  g=ggplot(df, aes(x=xbar1,y=xbar2))  + coord_equal()
+
+  gp = g + geom_point()
+  print(gp)
+  gd = g + stat_density_2d()
+  print(gd)
+
+  gt=ggplot(data=df, aes(df$thetar)) + geom_histogram() + xlab("Theta Value")
+  print(gt)
+
+  gt2 = ggplot(data=df, aes(df$thetar)) + geom_density() + xlab("Theta")
+  print(gt2)
+ # thetaValues = df$theta;
+ # hist(thetaValues)
+  #plot(density(thetaValues))
+
+  head(mat)
+}
+
+
+
+```
+
+  
+# Run the function
+
+To show the function works execute the following function calls
+
+```{r function, eval=TRUE}
+mu1=c(0,0)
+sigma1 = matrix(c(100,40,40,200), nr=2,nc=2,byrow=FALSE)
+xbarthetadist(n=80,iter=1000,mu=mu1,sigma=sigma1)
+
+sigma2 = matrix(c(100,-40,-40,200), nr=2,nc=2,byrow=FALSE)
+xbarthetadist(n=80,iter=1000,mu=mu1,sigma=sigma2)
+```
+
+# Now make a Shiny server
+
+Using the shiny dashboard template create widgets to input `n`, `iter`, `mu`, $\sigma_{ij}$ the output will be the plots: 2d density plot of $\bar{X}$ and histogram of $\theta$. I will leave it to you to make the suitable bounds on the widget variables (remember that the covariance matrix is symmetrical)
+
+```{r}
+
+```
+
+
